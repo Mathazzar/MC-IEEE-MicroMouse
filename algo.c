@@ -1,6 +1,6 @@
 /*
-Written by squidKnight, Mathazzar
-Last modified: 03/31/20
+Written by squidKnight
+Last modified: 03/16/20
 Purpose: hold all of the alorithm-related maze functions (scaning, solving, optimizing, etc.)
 Status: UNFINISHED, NOT TESTED
 
@@ -20,6 +20,8 @@ int nodeCheck(); //checks if current position is a node or not
 int getID(int direction, int dist, int position[2]); //gets the ID of the current node
 void stackInsert(int nodeCurrent[4]); //inserts new node into correct rank in stack based on distance
 void simLog(char* text); //modified from main.c in mms example (https://github.com/mackorone/mms-c)
+void choosePath(short int direction, short int x, short int y);
+int changeDirection(short int direction, short int type);
 
 //NOTE: if multithreading, remove from global scope and pass via pointers instead
 int nodeList[256][4]; //first dimension is ranking in stack (second dimension: 0 = nodeID, 1= distance traveled from last node, 2 = backpath (previous node), 3 = node type (explorable or not))
@@ -62,57 +64,83 @@ void nodeInit() //initialize nodeList
 void scan() //will A* be incorperated into this step?
 {
 	int position[2] = {0, 0}; //current x and y position
-	int dist = 0; //total distance, do NOT reset!
+	int distTotal = 0; //total distance, do NOT reset!
 	int direction = 0; //stores current orentation, 0 is starting orientation (assumed to be upwards): 0 = up, 1 = down, 2 = right, 3 = left
 	int nodePrevious = 1; //stores the ID of the previous node
 
 	simLog("Begining maze scan...");
-	int nodeClass = nodeCheck(); //temporarily stores a node's class: path node, corner, or deadend
-	while(nodeClass == 0) //waits until there is a node detected
+	while (!((position[0] == 8 || position[0] == 9) && (position[1] == 8 || position[1] == 9)))
 	{
+		int dist = 0;
+		int nodeClass = nodeCheck(); //temporarily stores a node's class: path node, corner, or deadend
+		while (nodeClass == 0/* || nodeID == nodePrevious*/) //waits until there is a node detected
+		{
+			API_moveForward();
+			dist++; //this needs to be replaced with motor functions to determie wall lengths traveled
+			nodeClass = nodeCheck();
+		}
+		simLog("\tEncountered node:");
+		distTotal += dist;
+		int nodeID = getID(direction, dist, position); //gets the ID at the current position
+		fprintf(stderr, "Current Position: %d, %d, %d \n", position[0], position[1], direction);
+		fflush(stderr);
+													   //do what needs to be done, depending on case
+		switch (nodeClass)
+		{
+		case -1: //if deadend
+		{
+			simLog("\t\tNode class: Dead-end\n\t\tReturning to previous node...");
+			API_setColor(position[0], position[1], 'R');
+			API_turnRight();
+			API_turnRight();
+			direction = changeDirection(direction, 1);
+			break;
+		}
+		case 1: //if maze node
+		{
+			simLog("\t\tNode class: Path node\n\t\tRecording node information...");
+			API_setColor(position[0], position[1], 'B');
+
+			int nodeCurrent[4]; //stores all information on current node
+			nodeCurrent[0] = nodeID; //node ID
+			nodeCurrent[1] = distTotal; //distance traveled
+			nodeCurrent[2] = nodePrevious; //backpath
+			nodeCurrent[3] = 1; //is an explorable node
+			nodePrevious = nodeID; //current node will be the next one's backpath
+			stackInsert(nodeCurrent); //inserts the node into the stack
+			simLog("Choosing next Route...");
+			choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
+			break;
+		}
+		case 2: //if corner
+		{
+			simLog("\t\tNode class: Corner\n\t\tRecording node information...");
+			API_setColor(position[0], position[1], 'G');
+			int nodeCurrent[4];
+			nodeCurrent[0] = nodeID;
+			nodeCurrent[1] = distTotal;
+			nodeCurrent[2] = nodePrevious;
+			nodeCurrent[3] = 0; //is NOT an explorable node
+			nodePrevious = nodeID;
+			stackInsert(nodeCurrent);
+			if (!API_wallRight())
+			{
+				API_turnRight();
+				direction = changeDirection(direction, 2);
+			}
+			else if (!API_wallLeft())
+			{
+				API_turnLeft();
+				direction = changeDirection(direction, 3);
+			}
+			break;
+		}
+		}
 		API_moveForward();
-		dist ++; //this needs to be replaced with motor functions to determie wall lengths traveled
-		nodeClass = nodeCheck();
-	}
-	simLog("\tEncountered node:");
-	int nodeID = getID(direction, dist, position); //gets the ID at the current position
+		//getID(direction, 1, position);
 
-	//do what needs to be done, depending on case
-	switch(nodeClass)
-	{
-	case -1: //if deadend
-	{
-		simLog("\t\tNode class: Dead-end\n\t\tReturning to previous node...");
-		API_setColor(position[0], position[1], 'R');
-		break;
-	}
-	case 1: //if maze node
-	{
-		simLog("\t\tNode class: Path node\n\t\tRecording node information...");
-		API_setColor(position[0], position[1], 'B');
-
-		int nodeCurrent[4]; //stores all information on current node
-		nodeCurrent[0] = nodeID; //node ID
-		nodeCurrent[1] = dist; //distance traveled
-		nodeCurrent[2] = nodePrevious; //backpath
-		nodeCurrent[3] = 1; //is an explorable node
-		nodePrevious = nodeID; //current node will be the next one's backpath
-		stackInsert(nodeCurrent); //inserts the node into the stack
-		break;
-	}
-	case 2: //if corner
-	{
-		simLog("\t\tNode class: Corner\n\t\tRecording node information...");
-		API_setColor(position[0], position[1], 'G');
-		int nodeCurrent[4];
-		nodeCurrent[0] = nodeID;
-		nodeCurrent[1] = dist;
-		nodeCurrent[2] = nodePrevious;
-		nodeCurrent[3] = 0; //is NOT an explorable node
-		nodePrevious = nodeID;
-		stackInsert(nodeCurrent);
-		break;
-	}
+		fprintf(stderr, "CURRENT Position: %d, %d, %d ,%d \n", position[0], position[1], direction, getID(direction, 1, position));
+		fflush(stderr);
 	}
 }
 
