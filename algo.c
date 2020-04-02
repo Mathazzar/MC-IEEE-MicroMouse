@@ -69,7 +69,7 @@ void scan() //will A* be incorperated into this step?
 	int nodePrevious = 1; //stores the ID of the previous node
 
 	simLog("Begining maze scan...");
-	while (!((position[0] == 7 || position[0] == 8) && (position[1] == 8 || position[1] == 9)))
+	while (!((position[0] == 7 || position[0] == 8) && (position[1] == 7 || position[1] == 8)))
 	{
 		int dist = 0;
 		int nodeClass = nodeCheck(); //temporarily stores a node's class: path node, corner, or deadend
