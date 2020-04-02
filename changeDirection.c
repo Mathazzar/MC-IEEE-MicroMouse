@@ -1,8 +1,8 @@
 /*
 Written by Mathazzar
-Last modified: 04/1/20
+Last modified: 04/2/20
 Purpose: update direction the micromouse is facing in relation to its original position.
-Status: UNFINISHED, PARTIALLY TESTED
+Status: FINISHED, PARTIALLY TESTED
 */
 
 //#include<stdio.h>
@@ -24,6 +24,7 @@ int changeDirection(short int direction, short int type) //Records changes in di
 	switch (type)
 	{
 	case 0: //no change in direction
+		dire = direction;
 		break;
 	case 1: //about-face
 		switch (direction)
@@ -77,11 +78,6 @@ int changeDirection(short int direction, short int type) //Records changes in di
 		}
 		break;
 	}
-	/*if (direction >= 4)
-		direction -= 4;
-	else if (direction <= -1)
-		direction += 4;
-	/*fprintf(stderr, "%d \n", direction);
-	fflush(stderr); (direction);*/
+
 	return dire;
 }
