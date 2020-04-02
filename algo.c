@@ -1,6 +1,6 @@
 /*
-Written by squidKnight
-Last modified: 03/16/20
+Written by squidKnight, Mathazzar
+Last modified: 04/2/20
 Purpose: hold all of the alorithm-related maze functions (scaning, solving, optimizing, etc.)
 Status: UNFINISHED, NOT TESTED
 
@@ -69,7 +69,7 @@ void scan() //will A* be incorperated into this step?
 	int nodePrevious = 1; //stores the ID of the previous node
 
 	simLog("Begining maze scan...");
-	while (!((position[0] == 8 || position[0] == 9) && (position[1] == 8 || position[1] == 9)))
+	while (!((position[0] == 7 || position[0] == 8) && (position[1] == 8 || position[1] == 9)))
 	{
 		int dist = 0;
 		int nodeClass = nodeCheck(); //temporarily stores a node's class: path node, corner, or deadend
@@ -91,9 +91,11 @@ void scan() //will A* be incorperated into this step?
 		{
 			simLog("\t\tNode class: Dead-end\n\t\tReturning to previous node...");
 			API_setColor(position[0], position[1], 'R');
+			//START replace with a return to last node function? May also want/need a qualifier earlier in loop to prevent the node from being recorded a second time depending on implementation
 			API_turnRight();
 			API_turnRight();
 			direction = changeDirection(direction, 1);
+			//END
 			break;
 		}
 		case 1: //if maze node
@@ -133,6 +135,7 @@ void scan() //will A* be incorperated into this step?
 				API_turnLeft();
 				direction = changeDirection(direction, 3);
 			}
+			distTotal++;
 			break;
 		}
 		}
@@ -141,6 +144,16 @@ void scan() //will A* be incorperated into this step?
 
 		fprintf(stderr, "CURRENT Position: %d, %d, %d ,%d \n", position[0], position[1], direction, getID(direction, 1, position));
 		fflush(stderr);
+		if (position[0] < 0 || position[0] >= 16)
+		{
+			simLog("X position ERROR");
+			break;
+		}
+		if (position[1] < 0 || position[1] >= 16)
+		{
+			simLog("Y position ERROR");
+			break;
+		}
 	}
 }
 
