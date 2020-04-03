@@ -92,13 +92,9 @@ void scan() //will A* be incorperated into this step?
 		{
 			simLog("\t\tNode class: Dead-end\n\t\tReturning to previous node...");
 			API_setColor(position[0], position[1], 'R');
-			/*//START replace with a return to last node function? May also want/need a qualifier earlier in loop to prevent the node from being recorded a second time depending on implementation
-			API_turnRight();
-			API_turnRight();
-			direction = changeDirection(direction, 1);
-			//END*/
 			direction = backpath(position, direction);
-			simLog("resuming scan...");
+			//needs some way to change/identify that the direction traveled has been fully explored and not explore it during scan again
+			simLog("\tresuming scan...");
 			break;
 		}
 		case 1: //if maze node
