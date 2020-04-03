@@ -22,6 +22,7 @@ void stackInsert(int nodeCurrent[4]); //inserts new node into correct rank in st
 void simLog(char* text); //modified from main.c in mms example (https://github.com/mackorone/mms-c)
 int choosePath(short int direction, short int x, short int y);
 int changeDirection(short int direction, short int type);
+int backpath(int position[2], short int direction);
 
 //NOTE: if multithreading, remove from global scope and pass via pointers instead
 int nodeList[256][4]; //first dimension is ranking in stack (second dimension: 0 = nodeID, 1= distance traveled from last node, 2 = backpath (previous node), 3 = node type (explorable or not))
@@ -91,11 +92,13 @@ void scan() //will A* be incorperated into this step?
 		{
 			simLog("\t\tNode class: Dead-end\n\t\tReturning to previous node...");
 			API_setColor(position[0], position[1], 'R');
-			//START replace with a return to last node function? May also want/need a qualifier earlier in loop to prevent the node from being recorded a second time depending on implementation
+			/*//START replace with a return to last node function? May also want/need a qualifier earlier in loop to prevent the node from being recorded a second time depending on implementation
 			API_turnRight();
 			API_turnRight();
 			direction = changeDirection(direction, 1);
-			//END
+			//END*/
+			direction = backpath(position, direction);
+			simLog("resuming scan...");
 			break;
 		}
 		case 1: //if maze node
@@ -116,6 +119,8 @@ void scan() //will A* be incorperated into this step?
 			direction = choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
 			fprintf(stderr, "to: %d, %d, %d \n", position[0], position[1], direction);
 			fflush(stderr);
+			API_moveForward();
+			getID(direction, 1, position); //comment this line out if debug code calls getID
 			break;
 		}
 		case 2: //if corner
@@ -140,16 +145,18 @@ void scan() //will A* be incorperated into this step?
 				direction = changeDirection(direction, 3);
 			}
 			distTotal++;
+			API_moveForward();
+			getID(direction, 1, position); //comment this line out if debug code calls getID
 			break;
 		}
 		}
-		API_moveForward();
+		//API_moveForward();
 		//getID modifies position directly when called, so should only be called when absolutely necessary
 		//getID(direction, 1, position); //comment this line out if debug code calls getID
 		
 		//vvvv debug code vvvv
-		fprintf(stderr, "CURRENT Position: %d, %d, %d, %d \n", position[0], position[1], direction, getID(direction, 1, position));
-		fflush(stderr);
+		/*fprintf(stderr, "CURRENT Position: %d, %d, %d, %d \n", position[0], position[1], direction, getID(direction, 1, position));
+		fflush(stderr);*/
 		if (position[0] < 0 || position[0] >= 16)
 		{
 			simLog("X position ERROR");
