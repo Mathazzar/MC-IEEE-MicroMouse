@@ -1,6 +1,6 @@
 /*
 Written by squidKnight, Mathazzar
-Last modified: 04/2/20
+Last modified: 04/3/20
 Purpose: hold all of the alorithm-related maze functions (scaning, solving, optimizing, etc.)
 Status: UNFINISHED, NOT TESTED
 
@@ -20,7 +20,7 @@ int nodeCheck(); //checks if current position is a node or not
 int getID(int direction, int dist, int position[2]); //gets the ID of the current node
 void stackInsert(int nodeCurrent[4]); //inserts new node into correct rank in stack based on distance
 void simLog(char* text); //modified from main.c in mms example (https://github.com/mackorone/mms-c)
-void choosePath(short int direction, short int x, short int y);
+int choosePath(short int direction, short int x, short int y);
 int changeDirection(short int direction, short int type);
 
 //NOTE: if multithreading, remove from global scope and pass via pointers instead
@@ -32,9 +32,9 @@ void nodeInit() //initialize nodeList
 
 	//set all distances and backpaths to inifinity
 	int i, j;
-	for(i=0; i<256; i++)
+	for (i = 0; i<256; i++)
 	{
-		for(j=0; j<4; j++)
+		for (j = 0; j<4; j++)
 		{
 			nodeList[i][j] = INFINITY;
 		}
@@ -45,14 +45,14 @@ void nodeInit() //initialize nodeList
 	nodeList[0][1] = 0; //set start point to have a distance of 0
 	nodeList[0][2] = 1; //set start point to have a backpath of 1 (to self)
 	nodeList[0][3] = 0; //set start point to have a node type of 0 (non-explorable, not a real node)
-	API_setColor(0,0,'Y'); //visual mark
+	API_setColor(0, 0, 'Y'); //visual mark
 	API_setText(0, 0, "start");
 
 	//mark goal position (IDs of 120, 121, 136, 137)
-	API_setColor(7,7,'Y');
-	API_setColor(7,8,'Y');
-	API_setColor(8,8,'Y');
-	API_setColor(8,7,'Y');
+	API_setColor(7, 7, 'Y');
+	API_setColor(7, 8, 'Y');
+	API_setColor(8, 8, 'Y');
+	API_setColor(8, 7, 'Y');
 	API_setText(7, 7, "Goal");
 	API_setText(7, 8, "Goal");
 	API_setText(8, 8, "Goal");
@@ -63,7 +63,7 @@ void nodeInit() //initialize nodeList
 
 void scan() //will A* be incorperated into this step?
 {
-	int position[2] = {0, 0}; //current x and y position
+	int position[2] = { 0, 0 }; //current x and y position
 	int distTotal = 0; //total distance, do NOT reset!
 	int direction = 0; //stores current orentation, 0 is starting orientation (assumed to be upwards): 0 = up, 1 = down, 2 = right, 3 = left
 	int nodePrevious = 1; //stores the ID of the previous node
@@ -84,7 +84,7 @@ void scan() //will A* be incorperated into this step?
 		int nodeID = getID(direction, dist, position); //gets the ID at the current position
 		fprintf(stderr, "Current Position: %d, %d, %d \n", position[0], position[1], direction);
 		fflush(stderr);
-													   //do what needs to be done, depending on case
+		//do what needs to be done, depending on case
 		switch (nodeClass)
 		{
 		case -1: //if deadend
@@ -111,7 +111,11 @@ void scan() //will A* be incorperated into this step?
 			nodePrevious = nodeID; //current node will be the next one's backpath
 			stackInsert(nodeCurrent); //inserts the node into the stack
 			simLog("Choosing next Route...");
-			choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
+			fprintf(stderr, "from: %d, %d, %d; ", position[0], position[1], direction);
+			fflush(stderr);
+			direction = choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
+			fprintf(stderr, "to: %d, %d, %d \n", position[0], position[1], direction);
+			fflush(stderr);
 			break;
 		}
 		case 2: //if corner
@@ -140,9 +144,11 @@ void scan() //will A* be incorperated into this step?
 		}
 		}
 		API_moveForward();
-		//getID(direction, 1, position);
-
-		fprintf(stderr, "CURRENT Position: %d, %d, %d ,%d \n", position[0], position[1], direction, getID(direction, 1, position));
+		//getID modifies position directly when called, so should only be called when absolutely necessary
+		//getID(direction, 1, position); //comment this line out if debug code calls getID
+		
+		//vvvv debug code vvvv
+		fprintf(stderr, "CURRENT Position: %d, %d, %d, %d \n", position[0], position[1], direction, getID(direction, 1, position));
 		fflush(stderr);
 		if (position[0] < 0 || position[0] >= 16)
 		{
@@ -163,13 +169,13 @@ void stackInsert(int nodeCurrent[4]) //adds new node into correct rank in stack 
 	int i;
 	bool rankFound = 0; //becomes 1 when stack rank for new node is found
 	int tempArr[4]; //temporary storage array to allow for swaping in stack
-	for(i=1; i<256; i++) //hope element 256 has nothing in it... (skipped in this loop)
+	for (i = 1; i<256; i++) //hope element 256 has nothing in it... (skipped in this loop)
 	{
-		if(nodeList[i-1][1] < nodeCurrent[1] && nodeList[i][1] > nodeCurrent[1]) //if node higher in stack is less in distance and node lower in stack is greater in distance  than current now (ie, distance of current node lies inbetween those two values)
+		if (nodeList[i - 1][1] < nodeCurrent[1] && nodeList[i][1] > nodeCurrent[1]) //if node higher in stack is less in distance and node lower in stack is greater in distance  than current now (ie, distance of current node lies inbetween those two values)
 			rankFound = 1;
 
 		//starting inserting nodes down the stack
-		if(rankFound)
+		if (rankFound)
 		{
 			//store information of node in ranking below current node to temporary array
 			tempArr[0] = nodeList[i][0];
@@ -184,15 +190,15 @@ void stackInsert(int nodeCurrent[4]) //adds new node into correct rank in stack 
 			nodeList[i][3] = nodeCurrent[3];
 
 			//treat the new node looking for a ranking as the new current node
-			nodeCurrent[0] = nodeList[i+1][0];
-			nodeCurrent[1] = nodeList[i+1][1];
-			nodeCurrent[2] = nodeList[i+1][2];
-			nodeCurrent[3] = nodeList[i+1][3];
+			nodeCurrent[0] = nodeList[i + 1][0];
+			nodeCurrent[1] = nodeList[i + 1][1];
+			nodeCurrent[2] = nodeList[i + 1][2];
+			nodeCurrent[3] = nodeList[i + 1][3];
 		}
 
-		if(nodeList[i-1][0] != 1024) //if a recorded node
+		if (nodeList[i - 1][0] != 1024) //if a recorded node
 		{
-			fprintf(stderr, "\t\t\tRank of node %d: %d \n",nodeList[i-1][0],i);
+			fprintf(stderr, "\t\t\tRank of node %d: %d \n", nodeList[i - 1][0], i);
 			fflush(stderr);
 		}
 	}
