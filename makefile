@@ -15,6 +15,7 @@ OBJ = main.o \
 	  simLog.o \
 	  changeDirection.o \
 	  choosePath.o\
+	  backpath.o\
 
 %.o : %.c
 	$(COMP) ${FLAGS} -c -o $@ $<
