@@ -23,11 +23,11 @@ int getID(int direction, int dist, int position[2])
 	//determine change based on direction
 	if(direction == 0) //if facing up
 		position[1] += dist; //y position increased (normally, this would be incremented in accordance to the matrix by recorded traveled distance)
-	if(direction == 1) //if facing down
+	else if(direction == 1) //if facing down
 		position[1] -= dist;
-	if(direction == 2) //if facing right
+	else if(direction == 2) //if facing right
 		position[0] += dist; //x position increased
-	if(direction == 3) //if facing left
+	else if(direction == 3) //if facing left
 		position[0] -= dist;
 
 	//translate to matrix format, this can be removed once outside of simulator
