@@ -1,6 +1,6 @@
 /*
 Written by squidKnight, Mathazzar
-Last modified: 04/3/20
+Last modified: 04/4/20
 Purpose: hold all of the alorithm-related maze functions (scaning, solving, optimizing, etc.)
 Status: UNFINISHED, NOT TESTED
 
@@ -9,7 +9,7 @@ NOTE: ONLY COMPATABLE IN SIMULATOR!! Need to translate and incorperate finished 
 NOTE: most of the simulator-based functions start with "API_" so any that have this prefix need to be replaced for the physical bot
 */
 
-#include <stdbool.h>	
+#include <stdbool.h>
 #include <stdio.h>
 #include "API.h" //only needed for simulator use
 
@@ -21,8 +21,8 @@ int getID(int direction, int dist, int position[2]); //gets the ID of the curren
 void stackInsert(int nodeCurrent[4]); //inserts new node into correct rank in stack based on distance
 void simLog(char* text); //modified from main.c in mms example (https://github.com/mackorone/mms-c)
 int choosePath(short int direction, short int x, short int y);
-int changeDirection(short int direction, short int type);
-int backpath(int position[2], short int direction);
+int changeDirection(short int direction, short int type); //update direction the micromouse is facing in relation to its original position.
+int backpath(int position[2], short int direction); //returns to previous non-corner node.
 
 //NOTE: if multithreading, remove from global scope and pass via pointers instead
 int nodeList[256][4]; //first dimension is ranking in stack (second dimension: 0 = nodeID, 1= distance traveled from last node, 2 = backpath (previous node), 3 = node type (explorable or not))
@@ -81,7 +81,7 @@ void scan() //will A* be incorperated into this step?
 			nodeClass = nodeCheck();
 		}
 		simLog("\tEncountered node:");
-		distTotal += dist;
+
 		int nodeID = getID(direction, dist, position); //gets the ID at the current position
 		fprintf(stderr, "Current Position: %d, %d, %d \n", position[0], position[1], direction);
 		fflush(stderr);
@@ -99,6 +99,7 @@ void scan() //will A* be incorperated into this step?
 		}
 		case 1: //if maze node
 		{
+			distTotal += dist;
 			simLog("\t\tNode class: Path node\n\t\tRecording node information...");
 			API_setColor(position[0], position[1], 'B');
 
@@ -109,10 +110,8 @@ void scan() //will A* be incorperated into this step?
 			nodeCurrent[3] = 1; //is an explorable node
 			nodePrevious = nodeID; //current node will be the next one's backpath
 			stackInsert(nodeCurrent); //inserts the node into the stack
-			simLog("Choosing next Route...");
-			fprintf(stderr, "from: %d, %d, %d; ", position[0], position[1], direction);
-			fflush(stderr);
 			direction = choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
+				//if there's no method to indicate a node has been partialy or fully explored, then the micromouse can get stuck in a loop
 			fprintf(stderr, "to: %d, %d, %d \n", position[0], position[1], direction);
 			fflush(stderr);
 			API_moveForward();
@@ -121,6 +120,7 @@ void scan() //will A* be incorperated into this step?
 		}
 		case 2: //if corner
 		{
+			distTotal += dist;
 			simLog("\t\tNode class: Corner\n\t\tRecording node information...");
 			API_setColor(position[0], position[1], 'G');
 			int nodeCurrent[4];
@@ -174,8 +174,16 @@ void stackInsert(int nodeCurrent[4]) //adds new node into correct rank in stack 
 	int tempArr[4]; //temporary storage array to allow for swaping in stack
 	for (i = 1; i<256; i++) //hope element 256 has nothing in it... (skipped in this loop)
 	{
-		if (nodeList[i - 1][1] < nodeCurrent[1] && nodeList[i][1] > nodeCurrent[1]) //if node higher in stack is less in distance and node lower in stack is greater in distance  than current now (ie, distance of current node lies inbetween those two values)
+		if (nodeList[i - 1][1] < nodeCurrent[1] && nodeList[i][1] > nodeCurrent[1]) //if node higher in stack is less in distance and node lower in stack is greater in distance  than current node (ie, distance of current node lies inbetween those two values)
 			rankFound = 1;
+		/*if (nodeCurrent[0] == 1024)
+			return rankFound;
+		else if (nodeList[i][0] == nodeCurrent[0])//if current node has same ID
+		{
+			simLog("Node already exists.");
+			fflush(stderr);
+			return false;
+		}*/
 
 		//starting inserting nodes down the stack
 		if (rankFound)
