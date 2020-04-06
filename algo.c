@@ -96,7 +96,9 @@ void scan() //will A* be incorperated into this step?
 
 			API_turnRight();
 			API_turnRight();
+			API_moveForward();
 			direction = changeDirection(direction, 1);
+			getID(direction, 1, position);
 			/*direction = backpath(position, direction);
 			//needs some way to change/identify that the direction traveled has been fully explored and not explore it during scan again*/
 			simLog("\tresuming scan...");
