@@ -1,6 +1,6 @@
 /*
 Written by squidKnight, Mathazzar
-Last modified: 04/6/20
+Last modified: 04/7/20
 Purpose: hold all of the alorithm-related maze functions (scaning, solving, optimizing, etc.)
 Status: UNFINISHED, NOT TESTED
 
@@ -24,7 +24,7 @@ int choosePath(short int direction, short int x, short int y);
 int changeDirection(short int direction, short int type); //update direction the micromouse is facing in relation to its original position.
 //int backpath(int position[2], short int direction); //returns to previous non-corner node.
 
-//NOTE: if multithreading, remove from global scope and pass via pointers instead
+														  //NOTE: if multithreading, remove from global scope and pass via pointers instead
 int nodeList[256][4]; //first dimension is ranking in stack (second dimension: 0 = nodeID, 1= distance traveled from last node, 2 = backpath (previous node), 3 = node type (explorable or not))
 
 void nodeInit() //initialize nodeList
@@ -84,6 +84,36 @@ void scan() //will A* be incorperated into this step?
 
 		int nodeID = getID(direction, dist, position); //gets the ID at the current position
 		distTotal += dist;
+		/*
+		while (nodeClass == 1) //waits until there is a node detected //Alternative System
+		{
+		if (!API_wallFront)
+		{
+		API_moveForward();
+		dist++; //this needs to be replaced with motor functions to determine wall lengths traveled
+		}
+		else if (!API_wallRight)
+		{
+		API_turnRight();
+		getID(direction, dist, position);
+		direction = changeDirection(direction, 2);
+		distTotal += dist + 1;
+		dist = 0;
+		}
+		else if (!API_wallLeft)
+		{
+		API_turnLeft();
+		getID(direction, dist, position);
+		direction = changeDirection(direction, 3);
+		distTotal += dist + 1;
+		dist = 0;
+		}
+		nodeClass = nodeCheck();
+		}
+		simLog("\tEncountered node:");
+
+		int nodeID = getID(direction, 0, position); //gets the ID at the current position
+		*/
 		fprintf(stderr, "Current Position: %d, %d, %d \n", position[0], position[1], direction);
 		fflush(stderr);
 		//do what needs to be done, depending on case
@@ -115,19 +145,19 @@ void scan() //will A* be incorperated into this step?
 			nodeCurrent[2] = nodePrevious; //backpath
 			nodeCurrent[3] = 1; //is an explorable node
 			nodePrevious = nodeID; //current node will be the next one's backpath
-			if (stackInsert(nodeCurrent)) //inserts the node into the stack
+			if (stackInsert(nodeCurrent) || 1==1) //inserts the node into the stack
 			{
 				direction = choosePath(direction, position[0], position[1]); //Check possible directions, then choose most likely to advance towards goal
-				//if there's no method to indicate a node has been partialy or fully explored, then the micromouse can get stuck in a loop
 			}
 			else
 			{
 				direction = changeDirection(direction, choosePath(direction, position[0], position[1])); //PLACEHOLDER: doesn't work
 			}
-			fprintf(stderr, "to: %d, %d, %d \n", position[0], position[1], direction);
-			fflush(stderr);
+			//if there's no method to indicate a node has been partialy or fully explored, then the micromouse can get stuck in a loop
 			API_moveForward();
 			getID(direction, 1, position); //comment this line out if debug code calls getID
+			fprintf(stderr, "to: %d, %d, %d \n", position[0], position[1], direction);
+			fflush(stderr);
 			break;
 		}
 		case 2: //if corner
@@ -162,7 +192,7 @@ void scan() //will A* be incorperated into this step?
 		//API_moveForward();
 		//getID modifies position directly when called, so should only be called when absolutely necessary
 		//getID(direction, 1, position); //comment this line out if debug code calls getID
-		
+
 		//vvvv debug code vvvv
 		/*fprintf(stderr, "CURRENT Position: %d, %d, %d, %d \n", position[0], position[1], direction, getID(direction, 1, position));
 		fflush(stderr);*/
@@ -182,7 +212,7 @@ void scan() //will A* be incorperated into this step?
 bool stackInsert(int nodeCurrent[4]) //adds new node into correct rank in stack based on distance
 {
 	simLog("\t\tInserting node to stack...");
-	bool rankFound = 0; //becomes 1 when stack rank for new node is found
+	//bool rankFound = 0; //becomes 1 when stack rank for new node is found
 	int tempArr[4]; //temporary storage array to allow for swaping in stack
 	for (int i = 1; i < 256; i++) //hope element 256 has nothing in it... (skipped in this loop)
 	{
@@ -192,21 +222,24 @@ bool stackInsert(int nodeCurrent[4]) //adds new node into correct rank in stack 
 			fflush(stderr);
 		}
 
+		/*
 		if ((nodeList[i - 1][1] < nodeCurrent[1]) && (nodeList[i][1] > nodeCurrent[1])) //if node higher in stack is less in distance and node lower in stack is greater in distance  than current node (ie, distance of current node lies inbetween those two values)
 			rankFound = 1;
+		*/
 		//if the current node is a blank node, all existing nodes have been shifted over and the loop can end
 		//if the current node already exists on the stack, then it doesn't need to be added to the stack, and cthe loop can end
 		if (nodeCurrent[0] == INFINITY)//if current node is blank
-			return rankFound;
+		{
+			simLog("All nodes on stack checked.");
+			return true;
+		}
 		else if (nodeList[i][0] == nodeCurrent[0])//if current node has same ID
 		{
 			simLog("Node already exists.");
-			fflush(stderr);
 			return false;
 		}
-
 		//starting inserting nodes down the stack
-		if (rankFound)
+		else if ((nodeList[i - 1][1] < nodeCurrent[1]) && (nodeList[i][1] > nodeCurrent[1]))
 		{
 			//store information of node in ranking below current node to temporary array
 			tempArr[0] = nodeList[i][0];
