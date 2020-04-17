@@ -1,11 +1,11 @@
 /*
 Written by Mathazzar
-Last modified: 04/3/20
+Last modified: 04/17/20
 Purpose: return to previous non-corner node.
-Status: FINISHED, TESTED
+Status: UNFINISHED, PARTIALLY TESTED
 */
 
-#include <stdbool.h>	
+#include <stdbool.h>
 #include <stdio.h>
 #include "API.h"
 
@@ -73,12 +73,15 @@ int backpath_classful(int position[2], short int direction)
 	API_moveForward();
 	dist++;
 
+	fprintf(stderr, "direction: %d\n", dire);
+	fflush(stderr);
+
 	//backtrace to last node visited
 	while (nodeCheck() != 1) //waits until there is a node detected
 	{
 		if (!API_wallFront())
 		{
-			//dire = updateDir(dire, 0);
+			
 		}
 		else if (!API_wallRight())
 		{
@@ -94,9 +97,14 @@ int backpath_classful(int position[2], short int direction)
 			dire = updateDir(dire, 3);
 			dist = 0;
 		}
+		else
+		{
+			simLog("WALL ERROR");
+		}
 		API_moveForward();
 		dist++;
 	}
+	updatePos(position, dire, dist);
 
 	simLog("Resuming...");
 	return dire;
