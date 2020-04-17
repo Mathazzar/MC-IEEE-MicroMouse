@@ -24,6 +24,7 @@ short int choosePath(int nodeCurrent[DATA], int paths, short int direction, int 
 		{
 			simLog("Checking left path...");
 			API_turnLeft();
+			dire = updateDir(dire, 3);
 
 			int distLastNode = checkPath(position, dire, paths);
 			
@@ -97,6 +98,8 @@ short int choosePath(int nodeCurrent[DATA], int paths, short int direction, int 
 	{
 		simLog("Checking right path...");
 		API_turnRight();
+		dire = updateDir(dire, 1);
+
 		int distLastNode = checkPath(position, dire, paths);
 
 		if (nodeCheck() == 1)
@@ -200,5 +203,6 @@ int checkPath(int position[2], short int dire, int paths)
 		API_moveForward();
 		dist++;
 	}
+	updatePos(position, dire, dist);
 	return distLastNode;
 }
