@@ -4,7 +4,7 @@ void simLog(char* text); //modified from main.c in mms example (https://github.c
 
 void updatePos(int position[2], short int direction, short int dist)
 {
-	fprintf(stderr, "moving from %d, %d to ", position[0], position[1]);
+	fprintf(stderr, "moving from (%d, %d, %d) %d units to ", position[0], position[1], direction, dist);
 	fflush(stderr);
 	switch (direction)
 	{
@@ -23,7 +23,7 @@ void updatePos(int position[2], short int direction, short int dist)
 	default:
 		break;
 	}
-	fprintf(stderr, "%d, %d \n", position[0], position[1]);
+	fprintf(stderr, "(%d, %d, %d) \n", position[0], position[1], direction);
 	fflush(stderr);
 	if (position[0] < 0 || position[0] >= 16)
 	{
